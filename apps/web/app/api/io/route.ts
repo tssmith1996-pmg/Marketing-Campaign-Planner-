@@ -1,7 +1,7 @@
 
 import { NextResponse } from "next/server";
 import PDFDocument from "pdfkit";
-import prisma from "../(components)/prisma";
+import prisma from "../../(components)/prisma";
 
 export async function POST(req: Request) {
   const { campaignId } = await req.json();
