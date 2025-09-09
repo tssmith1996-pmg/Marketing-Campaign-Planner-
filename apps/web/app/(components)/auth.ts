@@ -1,6 +1,15 @@
 
+import { getServerSession } from "next-auth";
+import { authOptions } from "../api/auth/[...nextauth]/route";
+
 export async function authGuard() {
-  // Placeholder without real NextAuth wiring (so the starter runs)
-  // In dev, pretend a single org/user; swap to NextAuth later.
-  return { orgId: "dev-org", userId: "dev-user", role: "ADMIN" };
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id || !(session as any).orgId) {
+    throw new Error("Unauthorized");
+  }
+  return {
+    orgId: (session as any).orgId as string,
+    userId: session.user.id as string,
+    role: ((session as any).role as string) || "VIEWER",
+  };
 }
