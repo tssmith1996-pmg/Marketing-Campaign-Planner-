@@ -1,8 +1,10 @@
 
-generator client { provider = "prisma-client-js" }
+generator client {
+  provider = "prisma-client-js"
+}
 
 datasource db {
-  provider = env("DATABASE_PROVIDER")
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -29,6 +31,8 @@ model Organization {
   users       Membership[]
   clients     Client[]
   audiences   Audience[]
+  campaigns   Campaign[]
+  auditLogs   AuditLog[]
 }
 
 model Membership {
@@ -41,7 +45,14 @@ model Membership {
   @@unique([userId, orgId])
 }
 
-enum Role { OWNER ADMIN PLANNER ANALYST VIEWER }
+enum Role {
+  OWNER
+  ADMIN
+  MEMBER
+  PLANNER
+  ANALYST
+  VIEWER
+}
 
 model Client {
   id        String   @id @default(cuid())
@@ -65,6 +76,8 @@ model Campaign {
   endDate     DateTime
   status      CampaignStatus @default(DRAFT)
   budgetTotal Decimal        @default(0)
+  targetMetric CampaignMetric?
+  targetValue  Decimal?
   notes       String?
   createdById String?
   createdAt   DateTime @default(now())
@@ -76,9 +89,29 @@ model Campaign {
   ioVersions  InsertionOrderVersion[]
   audiences   CampaignAudience[]
   actuals     Actual[]
+  comments    Comment[]
+  shareLinks  ShareLink[]
 }
 
-enum CampaignStatus { DRAFT PENDING_REVIEW APPROVED LIVE COMPLETE }
+enum CampaignStatus {
+  DRAFT
+  PENDING_REVIEW
+  APPROVED
+  LIVE
+  COMPLETE
+}
+
+enum CampaignMetric {
+  IMPRESSIONS
+  REACH
+  WEBSITE_TRAFFIC
+  CTR
+  CPC
+  LEADS
+  CONVERSION_RATE
+  CAC
+  ROI
+}
 
 model Flight {
   id          String   @id @default(cuid())

@@ -11,7 +11,23 @@ export async function GET(_: Request, { params }: { params: { id: string } }) {
   return NextResponse.json(c);
 }
 
-const Patch = z.object({ budgetTotal: z.number().optional() });
+const Patch = z.object({
+  budgetTotal: z.number().optional(),
+  targetMetric: z
+    .enum([
+      "IMPRESSIONS",
+      "REACH",
+      "WEBSITE_TRAFFIC",
+      "CTR",
+      "CPC",
+      "LEADS",
+      "CONVERSION_RATE",
+      "CAC",
+      "ROI",
+    ])
+    .optional(),
+  targetValue: z.number().nonnegative().optional(),
+});
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
   const { orgId } = await authGuard();
   const body = Patch.parse(await req.json());
