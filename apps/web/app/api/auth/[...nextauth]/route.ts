@@ -1,10 +1,11 @@
 import NextAuth, { AuthOptions } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import { PrismaAdapter } from "@next-auth/prisma-adapter";
+
 import prisma from "../../../(components)/prisma";
 
 export const authOptions: AuthOptions = {
-  adapter: PrismaAdapter(prisma),
+  // Using JWT sessions; user persistence handled in authorize
+
   session: { strategy: "jwt" },
   providers: [
     Credentials({
