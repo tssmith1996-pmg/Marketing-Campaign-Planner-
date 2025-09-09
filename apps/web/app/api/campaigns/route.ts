@@ -11,6 +11,20 @@ const Create = z.object({
   startDate: z.string(),
   endDate: z.string(),
   budgetTotal: z.number().nonnegative(),
+  targetMetric: z
+    .enum([
+      "IMPRESSIONS",
+      "REACH",
+      "WEBSITE_TRAFFIC",
+      "CTR",
+      "CPC",
+      "LEADS",
+      "CONVERSION_RATE",
+      "CAC",
+      "ROI",
+    ])
+    .optional(),
+  targetValue: z.number().nonnegative().optional(),
 });
 
 export async function GET() {
