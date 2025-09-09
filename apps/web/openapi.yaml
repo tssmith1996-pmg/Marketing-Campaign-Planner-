@@ -1,0 +1,594 @@
+openapi: 3.1.0
+info:
+  title: Media Planning API
+  version: "1.0.0"
+  description: >
+    API for top-down media budget planning, scenario versioning, AI forecasting,
+    optimization, pacing, and analytics. All requests are tenant-scoped via `X-Org-ID`.
+servers:
+  - url: https://api.yourdomain.com
+    description: Production
+  - url: https://staging-api.yourdomain.com
+    description: Staging
+security:
+  - bearerAuth: []
+tags:
+  - name: Media Plans
+  - name: Plan Versions
+  - name: Plan Lines
+  - name: Forecasting
+  - name: Allocation
+  - name: Pacing
+  - name: Analytics
+paths:
+  /media-plans:
+    post:
+      tags: [Media Plans]
+      summary: Create a media plan
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: '#/components/parameters/XOrgId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMediaPlanRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MediaPlan' }
+  /media-plans/{id}:
+    get:
+      tags: [Media Plans]
+      summary: Get a media plan
+      parameters:
+        - $ref: '#/components/parameters/XOrgId'
+        - $ref: '#/components/parameters/IdPathParam'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MediaPlan' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /media-plans/{id}/versions:
+    post:
+      tags: [Plan Versions]
+      summary: Create first/next plan version
+      parameters:
+        - $ref: '#/components/parameters/XOrgId'
+        - $ref: '#/components/parameters/IdPathParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                label: { type: string, maxLength: 120 }
+              additionalProperties: false
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PlanVersion' }
+  /plan-versions/{id}:
+    get:
+      tags: [Plan Versions]
+      summary: Get a plan version
+      parameters:
+        - $ref: '#/components/parameters/XOrgId'
+        - $ref: '#/components/parameters/IdPathParam'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PlanVersion' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [Plan Versions]
+      summary: Update plan version metadata or status
+      parameters:
+        - $ref: '#/components/parameters/XOrgId'
+        - $ref: '#/components/parameters/IdPathParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePlanVersionRequest'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PlanVersion' }
+  /plan-versions/{id}/clone:
+    post:
+      tags: [Plan Versions]
+      summary: Clone a plan version into a new working version
+      parameters:
+        - $ref: '#/components/parameters/XOrgId'
+        - $ref: '#/components/parameters/IdPathParam'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                label: { type: string }
+              additionalProperties: false
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PlanVersion' }
+  /plan-versions/{id}/lines:
+    post:
+      tags: [Plan Lines]
+      summary: Create a plan line (tactic header)
+      parameters:
+        - $ref: '#/components/parameters/XOrgId'
+        - $ref: '#/components/parameters/IdPathParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePlanLineRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PlanLine' }
+  /plan-lines/{id}:
+    patch:
+      tags: [Plan Lines]
+      summary: Update a plan line
+      parameters:
+        - $ref: '#/components/parameters/XOrgId'
+        - $ref: '#/components/parameters/IdPathParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePlanLineRequest'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PlanLine' }
+  /plan-lines/{id}/slices/bulk-upsert:
+    post:
+      tags: [Plan Lines]
+      summary: Bulk upsert time-sliced details (weekly/monthly)
+      parameters:
+        - $ref: '#/components/parameters/XOrgId'
+        - $ref: '#/components/parameters/IdPathParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              minItems: 1
+              items: { $ref: '#/components/schemas/PlanLineSliceUpsert' }
+      responses:
+        '200':
+          description: Upserted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  upserted: { type: integer }
+  /forecast-runs:
+    post:
+      tags: [Forecasting]
+      summary: Create a forecast run
+      parameters:
+        - $ref: '#/components/parameters/XOrgId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateForecastRunRequest' }
+      responses:
+        '202':
+          description: Accepted
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ForecastRun' }
+  /forecast-runs/{id}/results:
+    get:
+      tags: [Forecasting]
+      summary: Get forecast results
+      parameters:
+        - $ref: '#/components/parameters/XOrgId'
+        - $ref: '#/components/parameters/IdPathParam'
+        - in: query
+          name: groupBy
+          schema:
+            type: string
+            description: Comma-separated dimensions (e.g., channel,platform,week)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ForecastResult' }
+  /allocation-runs:
+    post:
+      tags: [Allocation]
+      summary: Start an allocation (optimization) run
+      parameters:
+        - $ref: '#/components/parameters/XOrgId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateAllocationRunRequest' }
+      responses:
+        '202':
+          description: Accepted
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AllocationRun' }
+  /allocation-runs/{id}/results:
+    get:
+      tags: [Allocation]
+      summary: Get allocation results (recommended spend by slice)
+      parameters:
+        - $ref: '#/components/parameters/XOrgId'
+        - $ref: '#/components/parameters/IdPathParam'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/AllocationResult' }
+  /pacing:
+    get:
+      tags: [Pacing]
+      summary: Plan vs Actuals pacing snapshot
+      parameters:
+        - $ref: '#/components/parameters/XOrgId'
+        - in: query
+          name: plan_version_id
+          required: true
+          schema: { type: string, format: uuid }
+        - in: query
+          name: asOf
+          required: false
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/PacingRow' }
+  /analytics/rollup:
+    get:
+      tags: [Analytics]
+      summary: Aggregated rollups by dimensions and period
+      parameters:
+        - $ref: '#/components/parameters/XOrgId'
+        - in: query
+          name: groupBy
+          required: true
+          schema:
+            type: string
+            description: Comma-separated rollup dims (e.g., channel,platform,market,month)
+        - in: query
+          name: plan_version_id
+          schema: { type: string, format: uuid }
+        - in: query
+          name: dateFrom
+          schema: { type: string, format: date }
+        - in: query
+          name: dateTo
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/RollupRow' }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    XOrgId:
+      in: header
+      name: X-Org-ID
+      required: true
+      schema: { type: string, format: uuid }
+      description: Tenant/organization ID.
+    IdPathParam:
+      in: path
+      name: id
+      required: true
+      schema: { type: string, format: uuid }
+  responses:
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+  schemas:
+    UUID:
+      type: string
+      format: uuid
+    Money:
+      type: number
+      format: decimal
+      multipleOf: 0.01
+      minimum: 0
+    DateISO:
+      type: string
+      format: date
+    Timestamp:
+      type: string
+      format: date-time
+    Error:
+      type: object
+      properties:
+        error: { type: string }
+        message: { type: string }
+        code: { type: string }
+      required: [error, message]
+    MediaPlanStatus:
+      type: string
+      enum: [draft, in_review, approved, archived]
+    PlanVersionStatus:
+      type: string
+      enum: [working, submitted, approved, rejected]
+    AllocationObjective:
+      type: string
+      enum: [maximize_kpi, minimize_cpa, maximize_revenue]
+    PacingLevel:
+      type: string
+      enum: [plan, line, slice]
+    MediaPlan:
+      type: object
+      properties:
+        id: { $ref: '#/components/schemas/UUID' }
+        campaign_id: { $ref: '#/components/schemas/UUID' }
+        name: { type: string }
+        currency: { type: string, default: AUD }
+        primary_kpi_id: { $ref: '#/components/schemas/UUID' }
+        planning_window_denom:
+          type: string
+          enum: [week, month]
+        start_date: { $ref: '#/components/schemas/DateISO' }
+        end_date: { $ref: '#/components/schemas/DateISO' }
+        status: { $ref: '#/components/schemas/MediaPlanStatus' }
+        created_at: { $ref: '#/components/schemas/Timestamp' }
+      required: [id, name, currency, status]
+    CreateMediaPlanRequest:
+      type: object
+      properties:
+        campaign_id: { $ref: '#/components/schemas/UUID' }
+        name: { type: string }
+        currency: { type: string, default: AUD }
+        primary_kpi_id: { $ref: '#/components/schemas/UUID' }
+        planning_window_denom:
+          type: string
+          enum: [week, month]
+        start_date: { $ref: '#/components/schemas/DateISO' }
+        end_date: { $ref: '#/components/schemas/DateISO' }
+      required: [name, currency]
+    PlanVersion:
+      type: object
+      properties:
+        id: { $ref: '#/components/schemas/UUID' }
+        media_plan_id: { $ref: '#/components/schemas/UUID' }
+        version_number: { type: integer }
+        label: { type: string }
+        status: { $ref: '#/components/schemas/PlanVersionStatus' }
+        is_baseline: { type: boolean, default: false }
+        created_by: { $ref: '#/components/schemas/UUID' }
+        created_at: { $ref: '#/components/schemas/Timestamp' }
+      required: [id, media_plan_id, version_number, status]
+    UpdatePlanVersionRequest:
+      type: object
+      properties:
+        label: { type: string }
+        status: { $ref: '#/components/schemas/PlanVersionStatus' }
+        is_baseline: { type: boolean }
+      additionalProperties: false
+    PlanLine:
+      type: object
+      properties:
+        id: { $ref: '#/components/schemas/UUID' }
+        plan_version_id: { $ref: '#/components/schemas/UUID' }
+        channel_id: { $ref: '#/components/schemas/UUID' }
+        platform_id: { $ref: '#/components/schemas/UUID' }
+        market_id: { $ref: '#/components/schemas/UUID' }
+        audience_id: { $ref: '#/components/schemas/UUID' }
+        objective_id: { $ref: '#/components/schemas/UUID' }
+        strategy_id: { $ref: '#/components/schemas/UUID' }
+        product_id: { $ref: '#/components/schemas/UUID' }
+        flight_start: { $ref: '#/components/schemas/DateISO' }
+        flight_end: { $ref: '#/components/schemas/DateISO' }
+        currency: { type: string, default: AUD }
+        locked: { type: boolean, default: false }
+        priority: { type: integer, minimum: 0, maximum: 100, default: 50 }
+        notes: { type: string }
+      required: [id, plan_version_id, flight_start, flight_end]
+    CreatePlanLineRequest:
+      allOf:
+        - $ref: '#/components/schemas/PlanLine'
+      required:
+        - plan_version_id
+        - flight_start
+        - flight_end
+    UpdatePlanLineRequest:
+      type: object
+      properties:
+        channel_id: { $ref: '#/components/schemas/UUID' }
+        platform_id: { $ref: '#/components/schemas/UUID' }
+        market_id: { $ref: '#/components/schemas/UUID' }
+        audience_id: { $ref: '#/components/schemas/UUID' }
+        objective_id: { $ref: '#/components/schemas/UUID' }
+        strategy_id: { $ref: '#/components/schemas/UUID' }
+        product_id: { $ref: '#/components/schemas/UUID' }
+        flight_start: { $ref: '#/components/schemas/DateISO' }
+        flight_end: { $ref: '#/components/schemas/DateISO' }
+        currency: { type: string }
+        locked: { type: boolean }
+        priority: { type: integer, minimum: 0, maximum: 100 }
+        notes: { type: string }
+      additionalProperties: false
+    PlanLineSliceUpsert:
+      type: object
+      properties:
+        period_start: { $ref: '#/components/schemas/DateISO' }
+        period_end: { $ref: '#/components/schemas/DateISO' }
+        planned_spend: { $ref: '#/components/schemas/Money' }
+        planned_units: { type: number }
+        planned_cpm: { type: number }
+        planned_cpc: { type: number }
+        planned_cpa: { type: number }
+        planned_kpi_target: { type: number }
+        min_spend: { $ref: '#/components/schemas/Money' }
+        max_spend: { $ref: '#/components/schemas/Money' }
+      required: [period_start, planned_spend]
+      additionalProperties: false
+    ForecastRunStatus:
+      type: string
+      enum: [queued, running, succeeded, failed]
+    CreateForecastRunRequest:
+      type: object
+      properties:
+        media_plan_id: { $ref: '#/components/schemas/UUID' }
+        method:
+          type: string
+          enum: [prophet, arima, xgboost]
+          default: prophet
+        params:
+          type: object
+          description: Arbitrary model params (JSON)
+      required: [media_plan_id]
+    ForecastRun:
+      type: object
+      properties:
+        id: { $ref: '#/components/schemas/UUID' }
+        org_id: { $ref: '#/components/schemas/UUID' }
+        media_plan_id: { $ref: '#/components/schemas/UUID' }
+        method: { type: string }
+        status: { $ref: '#/components/schemas/ForecastRunStatus' }
+        params: { type: object }
+        created_at: { $ref: '#/components/schemas/Timestamp' }
+      required: [id, media_plan_id, status]
+    ForecastResult:
+      type: object
+      properties:
+        date: { $ref: '#/components/schemas/DateISO' }
+        channel_id: { $ref: '#/components/schemas/UUID' }
+        platform_id: { $ref: '#/components/schemas/UUID' }
+        market_id: { $ref: '#/components/schemas/UUID' }
+        audience_id: { $ref: '#/components/schemas/UUID' }
+        strategy_id: { $ref: '#/components/schemas/UUID' }
+        product_id: { $ref: '#/components/schemas/UUID' }
+        expected_spend: { $ref: '#/components/schemas/Money' }
+        expected_kpi: { type: number }
+        kpi_conf_int_low: { type: number }
+        kpi_conf_int_high: { type: number }
+    CreateAllocationRunRequest:
+      type: object
+      properties:
+        plan_version_id: { $ref: '#/components/schemas/UUID' }
+        objective: { $ref: '#/components/schemas/AllocationObjective' }
+        params:
+          type: object
+          properties:
+            total_budget: { $ref: '#/components/schemas/Money' }
+            respect_locks: { type: boolean, default: true }
+            use_response_curves: { type: boolean, default: true }
+            group_constraints:
+              type: array
+              items:
+                type: object
+                properties:
+                  group:
+                    type: string
+                    enum: [channel, platform, market, audience, strategy, product]
+                  id: { $ref: '#/components/schemas/UUID' }
+                  type:
+                    type: string
+                    enum: [absolute, share]
+                    default: absolute
+                  min: { type: number }
+                  max: { type: number }
+                required: [group]
+      required: [plan_version_id, objective, params]
+    AllocationRunStatus:
+      type: string
+      enum: [queued, running, succeeded, failed]
+    AllocationRun:
+      type: object
+      properties:
+        id: { $ref: '#/components/schemas/UUID' }
+        plan_version_id: { $ref: '#/components/schemas/UUID' }
+        objective: { $ref: '#/components/schemas/AllocationObjective' }
+        status: { $ref: '#/components/schemas/AllocationRunStatus' }
+        params: { type: object }
+        created_at: { $ref: '#/components/schemas/Timestamp' }
+      required: [id, plan_version_id, objective, status]
+    AllocationResult:
+      type: object
+      properties:
+        plan_line_slice_id:
+          type: integer
+          description: Internal numeric ID of the plan_line_slice
+        recommended_spend: { $ref: '#/components/schemas/Money' }
+        expected_kpi: { type: number }
+        shadow_price: { type: number }
+    PacingRow:
+      type: object
+      properties:
+        level: { $ref: '#/components/schemas/PacingLevel' }
+        ref_id: { type: string, description: UUID or numeric slice id }
+        snapshot_date: { $ref: '#/components/schemas/DateISO' }
+        period_start: { $ref: '#/components/schemas/DateISO' }
+        period_end: { $ref: '#/components/schemas/DateISO' }
+        planned_spend: { $ref: '#/components/schemas/Money' }
+        actual_spend: { $ref: '#/components/schemas/Money' }
+        planned_kpi: { type: number }
+        actual_kpi: { type: number }
+        variance_spend_pct: { type: number }
+        variance_kpi_pct: { type: number }
+    RollupRow:
+      type: object
+      properties:
+        groupKeys:
+          type: object
+          additionalProperties: true
+          description: Dimension keys & values for the row
+        period_start: { $ref: '#/components/schemas/DateISO' }
+        period_end: { $ref: '#/components/schemas/DateISO' }
+        planned_spend: { $ref: '#/components/schemas/Money' }
+        actual_spend: { $ref: '#/components/schemas/Money' }
+        planned_kpi: { type: number }
+        actual_kpi: { type: number }
