@@ -1,8 +1,8 @@
 
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import prisma from "../(components)/prisma";
-import { authGuard } from "../(components)/auth";
+import prisma from "../../(components)/prisma";
+import { authGuard } from "../../(components)/auth";
 
 const Transition = z.object({ campaignId: z.string(), action: z.enum(["submit","approve","goLive","complete","revert"]) });
 
