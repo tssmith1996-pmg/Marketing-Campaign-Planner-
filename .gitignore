@@ -1,0 +1,14 @@
+# Node
+node_modules/
+
+# Next.js
+.next/
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# Prisma SQLite database
+apps/web/prisma/*.db
+
