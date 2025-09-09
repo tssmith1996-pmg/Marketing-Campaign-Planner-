@@ -1,0 +1,215 @@
+
+generator client { provider = "prisma-client-js" }
+
+datasource db {
+  provider = env("DATABASE_PROVIDER")
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  image        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  memberships  Membership[]
+  accounts     Account[]
+  sessions     Session[]
+  auditLogs    AuditLog[]
+  comments     Comment[]
+}
+
+model Organization {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  users       Membership[]
+  clients     Client[]
+  audiences   Audience[]
+}
+
+model Membership {
+  id        String   @id @default(cuid())
+  role      Role     @default(MEMBER)
+  userId    String
+  orgId     String
+  user      User     @relation(fields: [userId], references: [id])
+  org       Organization @relation(fields: [orgId], references: [id])
+  @@unique([userId, orgId])
+}
+
+enum Role { OWNER ADMIN PLANNER ANALYST VIEWER }
+
+model Client {
+  id        String   @id @default(cuid())
+  orgId     String
+  name      String
+  brand     String?
+  markets   String[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  org       Organization @relation(fields: [orgId], references: [id])
+  campaigns Campaign[]
+}
+
+model Campaign {
+  id          String   @id @default(cuid())
+  orgId       String
+  clientId    String
+  name        String
+  objective   String?
+  startDate   DateTime
+  endDate     DateTime
+  status      CampaignStatus @default(DRAFT)
+  budgetTotal Decimal        @default(0)
+  notes       String?
+  createdById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  org         Organization @relation(fields: [orgId], references: [id])
+  client      Client @relation(fields: [clientId], references: [id])
+  flights     Flight[]
+  approvals   Approval[]
+  ioVersions  InsertionOrderVersion[]
+  audiences   CampaignAudience[]
+  actuals     Actual[]
+}
+
+enum CampaignStatus { DRAFT PENDING_REVIEW APPROVED LIVE COMPLETE }
+
+model Flight {
+  id          String   @id @default(cuid())
+  campaignId  String
+  channel     String
+  market      String
+  startDate   DateTime
+  endDate     DateTime
+  budget      Decimal   @default(0)
+  pacingMode  String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  campaign    Campaign  @relation(fields: [campaignId], references: [id])
+  actuals     Actual[]
+}
+
+model Actual {
+  id         String   @id @default(cuid())
+  campaignId String
+  flightId   String?
+  date       DateTime
+  spend      Decimal   @default(0)
+  impressions Int?
+  clicks     Int?
+  conversions Int?
+  source     String?
+  campaign   Campaign  @relation(fields: [campaignId], references: [id])
+  flight     Flight?   @relation(fields: [flightId], references: [id])
+  @@index([campaignId, date])
+}
+
+model Approval {
+  id          String   @id @default(cuid())
+  campaignId  String
+  state       CampaignStatus
+  submittedBy String?
+  reviewedBy  String?
+  comment     String?
+  createdAt   DateTime @default(now())
+  campaign    Campaign @relation(fields: [campaignId], references: [id])
+}
+
+model Comment {
+  id         String   @id @default(cuid())
+  campaignId String
+  userId     String
+  body       String
+  createdAt  DateTime @default(now())
+  campaign   Campaign @relation(fields: [campaignId], references: [id])
+  user       User     @relation(fields: [userId], references: [id])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  orgId     String
+  userId    String?
+  action    String
+  entity    String
+  diff      Json?
+  createdAt DateTime @default(now())
+  org       Organization @relation(fields: [orgId], references: [id])
+  user      User?    @relation(fields: [userId], references: [id])
+}
+
+model Audience {
+  id        String   @id @default(cuid())
+  orgId     String
+  name      String
+  definition Json
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  org       Organization @relation(fields: [orgId], references: [id])
+  links     CampaignAudience[]
+}
+
+model CampaignAudience {
+  id         String @id @default(cuid())
+  campaignId String
+  audienceId String
+  notes      String?
+  campaign   Campaign @relation(fields: [campaignId], references: [id])
+  audience   Audience @relation(fields: [audienceId], references: [id])
+  @@unique([campaignId, audienceId])
+}
+
+model ShareLink {
+  id        String   @id @default(cuid())
+  campaignId String
+  token     String   @unique
+  expiresAt DateTime?
+  createdAt DateTime @default(now())
+  campaign  Campaign @relation(fields: [campaignId], references: [id])
+}
+
+// Minimal placeholder models to satisfy references
+model InsertionOrderVersion {
+  id        String   @id @default(cuid())
+  campaignId String
+  createdAt DateTime @default(now())
+  campaign  Campaign @relation(fields: [campaignId], references: [id])
+}
+
+// NextAuth (simplified)
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+  @@unique([identifier, token])
+}
