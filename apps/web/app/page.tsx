@@ -1,4 +1,3 @@
-
 "use client";
 
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
@@ -11,6 +10,7 @@ const data = [
   { month: "May", projected: 280, actual: 320 },
   { month: "Jun", projected: 300, actual: 340 },
 ];
+
 
 export default function Home() {
   return (

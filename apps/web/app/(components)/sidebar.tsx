@@ -40,6 +40,11 @@ export default function Sidebar() {
           <Link href="/targets" style={linkStyle}>
             Targets
           </Link>
+
+          <Link href="/planner" style={linkStyle}>
+            Plan Builder
+          </Link>
+
           <Link href="/overview" style={linkStyle}>
             Media Overview
           </Link>

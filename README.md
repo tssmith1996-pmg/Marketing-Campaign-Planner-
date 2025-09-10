@@ -17,6 +17,7 @@ The project ships with a basic vertical slice for planning and reporting and is 
 - **Cost estimation** – per line item estimates based on channel, format, audience and flight length.
 - **PDF exports** – plan versions can be exported to a basic PDF summary for clients.
 - **Camphouse inspired UI** – persistent sidebar and top bar navigation with sample dashboard components.
+- **Plan Builder** – experimental budget allocation interface at `/planner` featuring quick-add form and allocation table.
 
 ## Tech Stack
 
@@ -26,7 +27,6 @@ The project ships with a basic vertical slice for planning and reporting and is 
 - **Testing:** Node test runner and Jest-style assertions.
 
 ## Getting Started
-
 
 1. `cd apps/web`
 2. `cp .env.example .env.local`

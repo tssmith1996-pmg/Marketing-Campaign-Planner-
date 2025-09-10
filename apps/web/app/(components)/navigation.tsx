@@ -1,4 +1,3 @@
-
 import OrgSwitcher from "./org-switcher";
 import type { CSSProperties } from "react";
 
