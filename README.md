@@ -2,6 +2,7 @@
 
 Marketing Campaign Planner is an experimental media-planning toolkit built with **Next.js** and **Prisma**. It aims to give agencies a modern web interface for planning campaigns, tracking pacing, and collaborating with clients.
 
+
 The project ships with a basic vertical slice for planning and reporting and is ready to expand into a full featured platform. It currently uses an in-repo SQLite database for quick iteration but is structured to run on PostgreSQL in Google Cloud.
 
 ## Features
@@ -29,6 +30,7 @@ The project ships with a basic vertical slice for planning and reporting and is 
 
 1. `cd apps/web`
 2. `cp .env.example .env.local`
+
 3. Add your `SUPERMETRICS_API_KEY` if you intend to import data
 4. `npm install`
 5. `npm run prisma:migrate`
@@ -51,6 +53,7 @@ Use the **Data Viewer** at `/reports/data` to inspect stored metrics and trigger
 
 ```json
 { "campaignId": "<id>", "dsId": "<supermetrics source id>", "startDate": "YYYY-MM-DD", "endDate": "YYYY-MM-DD" }
+
 ```
 
 ## Roadmap

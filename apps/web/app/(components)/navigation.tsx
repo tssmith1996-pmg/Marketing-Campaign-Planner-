@@ -8,10 +8,12 @@ const iconButton: CSSProperties = {
   cursor: "pointer",
 };
 
+
 export default function Navigation() {
   return (
     <header
       style={{
+
         height: 56,
         borderBottom: "1px solid #e5e7eb",
         background: "white",
@@ -48,6 +50,7 @@ export default function Navigation() {
           style={{ width: 32, height: 32, borderRadius: "50%" }}
         />
       </div>
+
     </header>
   );
 }

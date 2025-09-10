@@ -12,6 +12,7 @@ export default function Sidebar() {
   return (
     <aside
       style={{
+
         width: 220,
         borderRight: "1px solid #e5e7eb",
         background: "white",
@@ -39,9 +40,11 @@ export default function Sidebar() {
           <Link href="/targets" style={linkStyle}>
             Targets
           </Link>
+
           <Link href="/planner" style={linkStyle}>
             Plan Builder
           </Link>
+
           <Link href="/overview" style={linkStyle}>
             Media Overview
           </Link>
@@ -64,6 +67,7 @@ export default function Sidebar() {
           Select plan
         </Link>
       </div>
+
     </aside>
   );
 }

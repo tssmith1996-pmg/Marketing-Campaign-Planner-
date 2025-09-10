@@ -11,6 +11,7 @@ const data = [
   { month: "Jun", projected: 300, actual: 340 },
 ];
 
+
 export default function Home() {
   return (
     <div style={{ padding: 24 }}>
@@ -38,5 +39,6 @@ export default function Home() {
         </ResponsiveContainer>
       </div>
     </div>
+
   );
 }
